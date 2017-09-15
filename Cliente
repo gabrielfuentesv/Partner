@@ -1,0 +1,87 @@
+import pygame,sys,time,socket
+from pygame.locals import*
+
+#Codigo de manejo por medio de los analogos  (Control de lado izquierdo y derecho por separado, para pruebas)
+#(Las lineas de comunicacion serial estan comentadas, por que se debe activar la comunicacion para no generar error en Python,
+# para pruebas, dejar esas lineas comentadas)
+ 
+def transformar_senal(axis):
+
+	if axis == -1:
+		senal_final = '1000\n' 
+	elif -1 < axis <= -0.8:
+		senal_final = '1100\n'
+	elif -0.8 < axis <= -0.6:
+		senal_final = '1200\n'
+	elif -0.6 < axis <= -0.4:
+		senal_final = '1300\n'
+	elif -0.4 < axis <= -0.2:
+		senal_final = '1400\n'
+	elif -0.2 < axis < 0:
+		senal_final = '1450\n'
+	elif axis == 0:
+		senal_final = '1500\n'
+	elif 0 < axis <= 0.2:
+		senal_final = '1600\n'
+	elif 0.2 < axis <= 0.4:
+		senal_final = '1700\n'
+	elif 0.4 < axis <= 0.6:
+		senal_final = '1800\n'
+	elif 0.6 < axis <= 0.8:
+		senal_final = '1900\n'
+	elif 0.8 < axis < 1:
+		senal_final = '1950\n'
+	elif axis == 1:
+		senal_final = '2000\n'
+
+	return senal_final
+
+pygame.init()
+pygame.joystick.init()
+joystick = pygame.joystick.Joystick(0)
+joystick.init()
+#screen = pygame.display.set_mode((400,300))
+#pygame.display.set_caption("Ventana Nada")
+ip = "192.168.2.7"
+interval = 0.05
+loopQuit = False
+skt = socket.socket()
+
+skt.connect((ip,6666)) #Completar ip del servidor (Ip estatica para router de Rover)
+
+
+while loopQuit == False:
+  
+
+	#axis_izq_hor = round(joystick.get_axis(0),3)
+	axis_izq_ver = round(joystick.get_axis(1),3)
+	#axis_der_hor = round(joystick.get_axis(2),3)
+	axis_der_ver = round(joystick.get_axis(3),3)
+
+	#print axis_izq_hor
+	print axis_izq_ver
+	print axis_der_ver
+	#print axis_der_hor
+
+	izq = transformar_senal(axis_izq_ver)
+	der = transformar_senal(axis_der_ver)
+	
+	msje = transformar_senal(axis_izq_ver).strip() + "." + transformar_senal(axis_der_ver).strip() + '\n'
+	print msje
+	
+
+	skt.send(msje)
+
+	for event in pygame.event.get():
+		if event.type == QUIT:
+			loopQuit = True
+		elif event.type == pygame.KEYDOWN:
+			if event.key == pygame.K_ESCAPE:
+				loopQuit = True
+	time.sleep(interval)
+
+
+
+skt.close()
+pygame.quit()
+sys.exit()
